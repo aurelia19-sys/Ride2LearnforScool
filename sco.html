@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 網頁標題 -->
+    <title>智慧家族．E學同行 - APP模擬器</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Icon (Heroicons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.1.1/24/outline/hero-icons.min.css">
+    
+    <style>
+        /* 使用 Google Noto Sans 字體 (針對繁體中文) */
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        /* 用於輔助修正小圖示的對齊 */
+        .icon-fix {
+             display: inline-block;
+             vertical-align: text-bottom;
+        }
+        /* 模擬手機的外框 */
+        .mobile-frame {
+            width: 100%;
+            max-width: 420px;
+            height: 90vh; /* 佔螢幕高度的 90% */
+            max-height: 800px; /* 最大高度 */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 0 0 12px rgba(30,30,30,0.9);
+            border-radius: 40px; /* 手機外框維持圓角 */
+            overflow: hidden; /* 隱藏超出框的內容 */
+            background-color: #f9fafb; /* APP 預設背景色 */
+        }
+        
+        /* 掃描動畫的線條 */
+        .scan-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(to right, transparent, #10B981, transparent);
+            box-shadow: 0 0 10px #10B981;
+            animation: scan 2.5s linear infinite;
+        }
+        /* 掃描動畫影格 */
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        /* APP 頁面基礎樣式 */
+        .page {
+            display: none; /* 預設隱藏 */
+            width: 100%;
+            height: 100%;
+            flex-direction: column; /* 垂直排版 */
+        }
+        /* 當前顯示的頁面 */
+        .page.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <!-- 模擬手機框架 -->
+    <div class="mobile-frame">
+        <div class="w-full h-full flex flex-col" id="app-container">
+
+            <!-- 
+              ==============================================
+              畫面 1: 登入畫面 (Login Page)
+              ==============================================
+            -->
+            <div id="page-login" class="page active bg-white p-6 justify-between">
+                <!-- 頁面內容 (置中) -->
+                <div class="flex-grow flex flex-col items-center justify-center text-center">
+                    <!-- Logo (減少圓角) -->
+                    <div class="w-24 h-24 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg mb-6">
+                        <!-- 滑板車圖示 -->
+                        <svg class="w-12 h-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                    </div>
+                    <!-- APP 標題 -->
+                    <h1 class="text-3xl font-bold text-gray-900">智慧家族．E學同行</h1>
+                    <p class="text-gray-500 mt-2">校園移動，一「嗶」就GO！</p>
+                </div>
+                <!-- 頁面底部 (按鈕) -->
+                <div class="w-full">
+                    <p class="text-center text-sm text-gray-400 mb-4">本模擬器將使用學生帳號登入</p>
+                    <!-- 登入按鈕 (減少圓角) -->
+                    <button onclick="doLogin()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-200 text-lg">
+                        使用學校Email登入
+                    </button>
+                </div>
+            </div>
+
+            <!-- 
+              ==============================================
+              畫面 2: 主列表畫面 (List Page)
+              ==============================================
+            -->
+            <div id="page-map" class="page relative bg-gray-100">
+                <!-- 頂部: 校區切換器 -->
+                <div class="absolute top-0 left-0 right-0 p-4 z-10 bg-gray-100 shadow">
+                    <!-- 下拉選單 (減少圓角) -->
+                    <select id="campus-selector" onchange="changeCampus(this.value)" class="w-full p-3 rounded-md shadow-lg font-semibold text-lg border-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="屏商">屏商校區</option>
+                        <option value="民生">民生校區</option>
+                        <option value="屏師">屏師校區</option>
+                    </select>
+                </div>
+                
+                <!-- 中間: 條列式站點列表 -->
+                <div id="list-area" class="flex-grow mt-20 p-4 overflow-y-auto space-y-3">
+                    <!-- 站點列表將由 JS 動態插入這裡 -->
+                </div>
+
+                <!-- 底部: 掃碼按鈕 -->
+                <div class="absolute bottom-0 left-0 right-0 p-6 bg-white rounded-t-2xl shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
+                    <!-- 掃碼按鈕 (減少圓角) -->
+                    <button onclick="showPage('page-scan')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-200 text-xl flex items-center justify-center">
+                        <!-- QR Code 圖示 -->
+                        <svg class="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.5a.75.75 0 00-.75.75v13.5c0 .414.336.75.75.75h13.5a.75.75 0 00.75-.75V5.25a.75.75 0 00-.75-.75H3.75zM9 15h.008v.008H9V15zm.008-3.008H9V12h.008v-.008zm3 3h.008v.008H12V15zm.008-3.008H12V12h.008v-.008zm3 3h.008v.008H15V15zm.008-3.008H15V12h.008v-.008z" />
+                        </svg>
+                        掃碼租借
+                    </button>
+                </div>
+
+                <!-- 彈出視窗: 站點詳細資訊 (維持頂部圓角) -->
+                <div id="station-details-modal" class="hidden absolute bottom-0 left-0 right-0 p-6 bg-white rounded-t-2xl shadow-[0_-10px_25px_rgba(0,0,0,0.1)] z-20 transition-transform duration-300 translate-y-full">
+                    <!-- 關閉按鈕 -->
+                    <button onclick="hideStationDetails()" class="absolute top-4 right-4 text-gray-400">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    
+                    <!-- 彈窗內容 -->
+                    <h2 id="modal-station-name" class="text-2xl font-bold mb-4">站點名稱</h2>
+                    <!-- 資訊卡 (減少圓角) -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-emerald-50 p-4 rounded-md text-center">
+                            <p class="text-sm font-medium text-emerald-700">可租借車輛</p>
+                            <p id="modal-available" class="text-3xl font-bold text-emerald-600">5</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-md text-center">
+                            <p class="text-sm font-medium text-blue-700">可歸還空位</p>
+                            <p id="modal-slots" class="text-3xl font-bold text-blue-600">12</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 步行時間 -->
+                    <div>
+                        <h3 class="font-semibold text-gray-600 mb-2">步行至附近站點：</h3>
+                        <div id="modal-walk-times" class="space-y-1 text-sm text-gray-500">
+                            <!-- 步行時間將由 JS 動態插入 -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 
+              ==============================================
+              畫面 3: 掃描 QR Code (Scan Page)
+              ==============================================
+            -->
+            <div id="page-scan" class="page bg-gray-900 text-white relative">
+                <!-- 返回按鈕 (維持圓形) -->
+                <button onclick="showPage('page-map')" class="absolute top-6 left-6 z-10 p-2 bg-black bg-opacity-30 rounded-full">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+                
+                <!-- 掃描區域 -->
+                <div class="flex-grow flex flex-col items-center justify-center">
+                    <p class="text-lg mb-4">請對準車龍頭上的 QR Code</p>
+                    <!-- 掃描框 (減少圓角) -->
+                    <div class="w-64 h-64 bg-gray-700 rounded-md overflow-hidden relative">
+                        <!-- 掃描動畫線 -->
+                        <div class="scan-line"></div>
+                        <div class="absolute inset-0 border-4 border-white border-opacity-50"></div>
+                    </div>
+                </div>
+                
+                <!-- 手電筒按鈕 -->
+                <div class="p-6 text-center">
+                    <button class="text-gray-300 hover:text-white transition duration-200">
+                        🔦 開啟手電筒
+                    </button>
+                </div>
+                
+                <!-- 模擬掃描的腳本 -->
+                <script>
+                    // 監聽此頁面是否被顯示
+                    document.getElementById('page-scan').addEventListener('display', function() {
+                        // 當此頁面顯示時，模擬一個 2 秒的掃描延遲
+                        setTimeout(() => {
+                            // 檢查用戶是否還停留在掃描頁 (避免跳頁後才觸發)
+                            if (currentPage === 'page-scan') {
+                                startRide(); // 2秒後自動跳轉到騎乘中
+                            }
+                        }, 2000);
+                    });
+                </script>
+            </div>
+
+            <!-- 
+              ==============================================
+              畫面 4: 騎乘中 (Riding Page)
+              ==============================================
+            -->
+            <div id="page-riding" class="page flex-col">
+                <!-- 頂部資訊 -->
+                <div class="p-6 bg-white shadow-md text-center">
+                    <p class="text-sm text-gray-500">騎乘時間</p>
+                    <p id="ride-timer" class="text-5xl font-bold text-gray-900">00:00</p>
+                    <p class="text-sm text-gray-500 mt-2">預估費用</p>
+                    <p id="ride-cost" class="text-2xl font-semibold text-emerald-600">$ 10</p>
+                </div>
+                
+                <!-- 狀態顯示 (取代地圖) -->
+                <div class="flex-grow bg-gray-100 p-4 flex flex-col items-center justify-center text-center">
+                    <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
+                        <!-- 滑板車圖示 -->
+                        <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M1 1.5A1.5 1.5 0 012.5 0h11.758a1.5 1.5 0 011.396 2.15l-2.612 5.223A1.5 1.5 0 0111.758 8H6.612a1.5 1.5 0 01-1.396-2.15L2.604 1.5zM3 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM12 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
+                            <path d="M3.193 14.632l-1.42 4.261A1.5 1.5 0 003.25 20h13.5a1.5 1.5 0 001.478-1.107l-1.42-4.261H3.192z" />
+                        </svg>
+                    </div>
+                    <p class="text-2xl font-semibold text-gray-700">騎乘中...</p>
+                    <p class="text-gray-500 mt-2">祝您旅途愉快！</p>
+                </div>
+                
+                <!-- 底部按鈕 -->
+                <div class="p-6 bg-white rounded-t-2xl shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
+                    <!-- 結束按鈕 (減少圓角) -->
+                    <button onclick="endRide()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition duration-200 text-xl">
+                        結束騎乘
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 
+              ==============================================
+              畫面 5: 還車總結 (Return Page)
+              ==============================================
+            -->
+            <div id="page-returned" class="page bg-white p-6 justify-between">
+                <!-- 頁面內容 (置中) -->
+                <div class="flex-grow flex flex-col items-center justify-center text-center">
+                    <!-- 成功圖示 (減少圓角) -->
+                    <div class="w-24 h-24 bg-emerald-100 rounded-xl flex items-center justify-center mb-6">
+                        <svg class="w-12 h-12 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-900">還車成功！</h1>
+                    <p class="text-gray-500 mt-2">感謝您的使用</p>
+                    
+                    <!-- 總結卡 (減少圓角) -->
+                    <div class="w-full bg-gray-50 rounded-md p-6 mt-8 text-left space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500">本次騎乘</p>
+                            <p id="summary-time" class="text-2xl font-semibold">05:32</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">總共費用</p>
+                            <p id="summary-cost" class="text-2xl font-semibold">$ 15</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">支付方式</p>
+                            <p class="text-lg font-medium">學生證 (已扣款)</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 頁面底部 (按鈕) -->
+                <div class="w-full">
+                    <!-- 返回按鈕 (減少圓角) -->
+                    <button onclick="showPage('page-map')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-200 text-lg">
+                        返回主畫面
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- 模擬資料庫 (使用您提供的 CSV 站點名稱) ---
+        const stationsData = {
+            '屏商': {
+                name: '屏商校區',
+                stops: ['入口', '活動中心', '行政大樓', '球場', '二館', '一館', '操場', '學餐', '圖資大樓', '一宿', '二宿']
+            },
+            '民生': {
+                name: '民生校區',
+                stops: ['正門', '五育樓', '人文館', '北側機車', '球場', '機車出口']
+            },
+            '屏師': {
+                name: '屏師校區',
+                stops: ['游泳池', '操場', '音樂館', '第三停車']
+            }
+        };
+
+        // --- APP 全域狀態 ---
+        let currentPage = 'page-login'; // 追蹤目前在哪個頁面
+        let currentCampusKey = '屏商'; // 追蹤目前選擇的校區
+        let rideTimerInterval; // 用於儲存計時器
+        let rideSeconds = 0; // 騎乘秒數
+        let rideCost = 10; // 起始費用
+
+        // --- APP 核心功能 ---
+
+        /**
+         * 顯示特定 ID 的頁面, 並隱藏其他頁面
+         * @param {string} pageId 要顯示的頁面 ID (例如 'page-login')
+         */
+        function showPage(pageId) {
+            // 隱藏所有頁面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 顯示目標頁面
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                currentPage = pageId; // 更新全域狀態
+
+                // 觸發一個自定義的 'display' 事件
+                // (這是給 'page-scan' 頁面用來啟動模擬掃描的)
+                const event = new Event('display');
+                targetPage.dispatchEvent(event);
+            }
+            
+            // 如果是回到主畫面(page-map)，要確保彈出視窗是關閉的
+            if (pageId === 'page-map') {
+                hideStationDetails();
+            }
+        }
+
+        /**
+         * 模擬登入
+         */
+        function doLogin() {
+            console.log("登入中...");
+            // 模擬 API 呼叫的延遲
+            setTimeout(() => {
+                showPage('page-map'); // 登入成功，跳轉到主畫面
+                changeCampus('屏商'); // 預設顯示屏商校區的列表
+            }, 500);
+        }
+
+        /**
+         * 切換校區並更新站點列表
+         * @param {string} campusKey 校區的 Key (例如 '屏商')
+         */
+        function changeCampus(campusKey) {
+            console.log("切換校區至:", campusKey);
+            currentCampusKey = campusKey; // 儲存目前校區
+            const listArea = document.getElementById('list-area'); // 抓取列表容器
+            const campus = stationsData[campusKey]; // 從資料庫撈資料
+            
+            if (!campus) return; // 防呆
+
+            // 清空目前的列表
+            listArea.innerHTML = '';
+
+            // 根據資料庫中的站點名稱，動態產生列表
+            campus.stops.forEach(stopName => {
+                // 模擬即時的車輛與空位
+                const available = Math.floor(Math.random() * 10);
+                const slots = Math.floor(Math.random() * 15) + 5;
+                
+                const item = document.createElement('div');
+                // 列表項目的樣式 (減少圓角)
+                item.className = 'bg-white p-4 rounded-lg shadow flex items-center justify-between cursor-pointer hover:bg-gray-50 transition duration-150';
+                
+                // 列表項目的內容 (HTML)
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <!-- 站點圖示 (減少圓角) -->
+                        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                                <path d="M1 1.5A1.5 1.5 0 012.5 0h11.758a1.5 1.5 0 011.396 2.15l-2.612 5.223A1.5 1.5 0 0111.758 8H6.612a1.5 1.5 0 01-1.396-2.15L2.604 1.5zM3 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM12 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
+                                <path d="M3.193 14.632l-1.42 4.261A1.5 1.5 0 003.25 20h13.5a1.5 1.5 0 001.478-1.107l-1.42-4.261H3.192z" />
+                            </svg>
+                        </div>
+                        <!-- 站點資訊 -->
+                        <div>
+                            <p class="font-semibold text-lg text-gray-800">${stopName}</p>
+                            <p class="text-sm text-gray-500">可租借: ${available} 輛 / 可還車: ${slots} 格</p>
+                        </div>
+                    </div>
+                    <!-- 向右箭頭 -->
+                    <div class="text-gray-400">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </div>
+                `;
+                
+                // 幫每個列表項目加上點擊事件
+                item.onclick = () => showStationDetails(stopName, available, slots, campusKey);
+                
+                // 把產生好的項目加到列表中
+                listArea.appendChild(item);
+            });
+        }
+        
+        /**
+         * 顯示站點詳細資訊的彈出視窗
+         */
+        function showStationDetails(name, available, slots, campusKey) {
+            // 填入資訊
+            document.getElementById('modal-station-name').innerText = name;
+            document.getElementById('modal-available').innerText = available;
+            document.getElementById('modal-slots').innerText = slots;
+            
+            // 模擬步行時間 (隨機抓 3 個同校區的其他站點)
+            const walkTimesDiv = document.getElementById('modal-walk-times');
+            walkTimesDiv.innerHTML = '';
+            const otherStops = stationsData[campusKey].stops
+                .filter(s => s !== name) // 排除自己
+                .sort(() => 0.5 - Math.random()) // 隨機排序
+                .slice(0, 3); // 取 3 個
+            
+            if (otherStops.length === 0) {
+                 walkTimesDiv.innerHTML = '<p>- 附近無其他站點 -</p>';
+            } else {
+                // 顯示隨機的步行時間
+                otherStops.forEach(stop => {
+                    const timeMin = Math.floor(Math.random() * 5) + 1; // 1-5 分鐘
+                    const timeSec = Math.floor(Math.random() * 60); // 0-59 秒
+                    walkTimesDiv.innerHTML += `<p>- ${stop} (約 ${timeMin}m ${timeSec}s)</p>`;
+                });
+            }
+
+            // 顯示彈窗 (使用 CSS translate 實現滑入動畫)
+            const modal = document.getElementById('station-details-modal');
+            modal.classList.remove('hidden', 'translate-y-full');
+            modal.classList.add('translate-y-0');
+        }
+
+        /**
+         * 隱藏站點詳細資訊的彈出視窗
+         */
+        function hideStationDetails() {
+            const modal = document.getElementById('station-details-modal');
+            modal.classList.add('translate-y-full'); // 滑出
+            modal.classList.remove('translate-y-0');
+            // 等待動畫結束後 (300ms) 再隱藏(display: none)
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        /**
+         * 開始騎乘 (從掃描頁觸發)
+         */
+        function startRide() {
+            showPage('page-riding'); // 跳轉到騎乘頁
+            rideSeconds = 0; // 重設秒數
+            rideCost = 10; // 重設起跳價
+            
+            // 更新畫面上的計時器與費用
+            document.getElementById('ride-timer').innerText = "00:00";
+            document.getElementById('ride-cost').innerText = `$ ${rideCost}`;
+            
+            // 啟動計時器 (每秒執行一次)
+            rideTimerInterval = setInterval(() => {
+                rideSeconds++;
+                
+                // 更新時間
+                const minutes = Math.floor(rideSeconds / 60);
+                const seconds = rideSeconds % 60;
+                document.getElementById('ride-timer').innerText = 
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                // 模擬計費 (例如: 每 30 秒跳 1 元)
+                if (rideSeconds > 0 && rideSeconds % 30 === 0) {
+                    rideCost += 1;
+                    document.getElementById('ride-cost').innerText = `$ ${rideCost}`;
+                }
+                
+            }, 1000);
+        }
+
+        /**
+         * 結束騎乘
+         */
+        function endRide() {
+            clearInterval(rideTimerInterval); // 停止計時器
+            
+            // 顯示總結畫面
+            document.getElementById('summary-time').innerText = document.getElementById('ride-timer').innerText;
+            document.getElementById('summary-cost').innerText = `$ ${rideCost}`;
+            
+            showPage('page-returned'); // 跳轉到還車總結頁
+        }
+
+        // --- 初始啟動 ---
+        // 當 HTML 文件載入完成時，預設顯示登入頁面
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('page-login');
+        });
+
+    </script>
+</body>
+</html>

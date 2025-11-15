@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧校園入口</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md bg-white p-8 md:p-10 rounded-xl shadow-2xl text-center">
+        <!-- Logo -->
+        <div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg mb-6 mx-auto">
+            <!-- 學校圖示 (簡易) -->
+            <svg class="w-10 h-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-5.25m0 0a6.01 6.01 0 001.5-1.125l1.13-1.13a.25.25 0 01.32-.043l3.3 1.65a.25.25 0 01.043.32l-1.13 1.13a6.01 6.01 0 00-1.125 1.5m-3.375 0c.231.246.467.49.707.733a6.01 6.01 0 001.5 1.125m-2.207-2.583a6.01 6.01 0 01-1.5 1.125l-1.13 1.13a.25.25 0 00-.043.32l-1.65 3.3a.25.25 0 00.32.043l1.13-1.13a6.01 6.01 0 011.125-1.5m-3.375 0c-.231.246-.467.49-.707.733a6.01 6.01 0 01-1.5 1.125m2.207-2.583a6.01 6.01 0 00-1.5-1.125l-1.13-1.13a.25.25 0 01-.32-.043l-3.3 1.65a.25.25 0 01-.043.32l1.13 1.13a6.01 6.01 0 001.125 1.5m3.375 0c-.231-.246-.467-.49-.707-.733a6.01 6.01 0 00-1.5-1.125m-2.207 2.583c-.231.246-.467.49-.707.733a6.01 6.01 0 01-1.5 1.125l-1.13 1.13a.25.25 0 00-.043.32L3.17 21.04a.25.25 0 00.32.043l1.13-1.13a6.01 6.01 0 011.125-1.5m3.375 0c.231-.246.467-.49.707-.733a6.01 6.01 0 011.5-1.125m-2.207 2.583a6.01 6.01 0 001.5 1.125l1.13 1.13a.25.25 0 01.32.043l3.3-1.65a.25.25 0 01.043-.32l-1.13-1.13a6.01 6.01 0 00-1.125-1.5m-3.375 0c.231.246.467.49.707.733a6.01 6.01 0 001.5 1.125M12 3v5.25m0 0a6.01 6.01 0 01-1.5 1.125l-1.13 1.13a.25.25 0 00-.32.043L5.75 12.2a.25.25 0 00-.043.32l1.13 1.13A6.01 6.01 0 018.25 15m3.375 0c-.231-.246-.467-.49-.707-.733a6.01 6.01 0 01-1.5-1.125m2.207 2.583a6.01 6.01 0 001.5-1.125l1.13-1.13a.25.25 0 00.043-.32l1.65-3.3a.25.25 0 00-.32-.043l-1.13 1.13a6.01 6.01 0 00-1.125 1.5m3.375 0c.231-.246.467-.49.707-.733a6.01 6.01 0 001.5-1.125m-2.207-2.583a6.01 6.01 0 011.5-1.125l1.13-1.13a.25.25 0 01.32.043l3.3-1.65a.25.25 0 01.043-.32l-1.13-1.13a6.01 6.01 0 01-1.125-1.5m-3.375 0c-.231.246-.467.49-.707.733a6.01 6.01 0 01-1.5 1.125m2.207-2.583a6.01 6.01 0 00-1.5 1.125l-1.13 1.13a.25.25 0 01-.32.043l-3.3-1.65a.25.25 0 01-.043-.32l1.13-1.13a6.01 6.01 0 001.125-1.5m-3.375 0c.231.246.467.49.707.733a6.01 6.01 0 00-1.5 1.125M12 3v5.25" />
+            </svg>
+        </div>
+        
+        <!-- 標題 -->
+        <h1 class="text-3xl font-bold text-gray-900">智慧校園</h1>
+        <p class="text-gray-500 mt-2 mb-8">請選擇您要使用的服務</p>
+
+        <!-- 選項按鈕 -->
+        <div class="space-y-4">
+            <!-- 連結到選課系統 -->
+            <a href="chos.html" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-5 rounded-lg shadow-lg transition duration-200 text-lg flex items-center justify-center">
+                <!-- 選課圖示 -->
+                <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18c-2.305 0-4.408.867-6 2.292m0-14.25v14.25" />
+                </svg>
+                跨校區選課模擬系統
+            </a>
+
+            <!-- 連結到電動滑板車 -->
+            <a href="sco.html" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-5 rounded-lg shadow-lg transition duration-200 text-lg flex items-center justify-center">
+                <!-- 滑板車圖示 -->
+                <svg class="w-6 h-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                共享電動滑板車租借
+            </a>
+        </div>
+        
+        <p class="text-center text-sm text-gray-400 mt-10">
+            智慧家族．E學同行
+        </p>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選課模擬系統</title>
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inter 字體 */
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        /* 課程卡片 hover 效果 */
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-center text-blue-800">
+                跨校區選課模擬系統
+            </h1>
+
+        </header>
+
+        <!-- 設定區域 -->
+        <div class="mb-6 p-4 bg-white rounded-lg shadow-md">
+            <label for="transport-mode" class="block text-lg font-medium text-gray-700">
+                我的主要交通方式：
+            </label>
+            <select id="transport-mode" class="mt-2 block w-full md:w-1/3 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <option value="機車">機車</option>
+                <option value="腳踏車">腳踏車</option>
+                <option value="公車">公車</option>
+                <option value="走路">走路</option>
+            </select>
+        </div>
+
+        <!-- 主內容區域 -->
+        <div class="flex flex-col md:flex-row gap-6">
+
+            <!-- 左側：可選課程 -->
+            <div class="md:w-1/2 lg:w-2/5">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">可選課程</h2>
+                <div id="course-list" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <!-- 課程卡片將由 JS 動態產生 -->
+                </div>
+            </div>
+
+            <!-- 右側：我的課表 -->
+            <div class="md:w-1/2 lg:w-3/5">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">我的課表</h2>
+                <div id="schedule-days" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- 每日課表將由 JS 動態產生 -->
+                    <div data-day="週一"><h3 class="font-bold text-lg mb-2 p-2 bg-gray-200 rounded-t-md">週一</h3><div class="day-content p-2 space-y-2 min-h-[100px]"></div></div>
+                    <div data-day="週二"><h3 class="font-bold text-lg mb-2 p-2 bg-gray-200 rounded-t-md">週二</h3><div class="day-content p-2 space-y-2 min-h-[100px]"></div></div>
+                    <div data-day="週三"><h3 class="font-bold text-lg mb-2 p-2 bg-gray-200 rounded-t-md">週三</h3><div class="day-content p-2 space-y-2 min-h-[100px]"></div></div>
+                    <div data-day="週四"><h3 class="font-bold text-lg mb-2 p-2 bg-gray-200 rounded-t-md">週四</h3><div class="day-content p-2 space-y-2 min-h-[100px]"></div></div>
+                    <div data-day="週五"><h3 class="font-bold text-lg mb-2 p-2 bg-gray-200 rounded-t-md">週五</h3><div class="day-content p-2 space-y-2 min-h-[100px]"></div></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 訊息中心 -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">訊息中心</h2>
+            <div id="message-log" class="w-full min-h-[100px] bg-white p-4 rounded-lg shadow-md text-sm space-y-2">
+                <p class="text-gray-500">請點選課程以加入課表。系統將在此顯示衝突或成功訊息。</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 資料庫：模擬課程 ---
+            // 根據使用者提供的規則建立模擬課程
+            // 規則：9點開始 (偶爾8點), 3節課, 通識2節 (週三)
+            const mockCourses = [
+                // 週一
+                { id: 'C001', name: '基礎會計', campus: '屏商', building: '行政大樓', day: '週一', startTime: '09:10', endTime: '12:00', credits: 3, type: '一般' },
+                { id: 'C002', name: '民法概要', campus: '民生', building: '人文館', day: '週一', startTime: '13:30', endTime: '15:20', credits: 2, type: '一般' },
+                { id: 'C003', name: '體育-羽球', campus: '屏商', building: '球場', day: '週一', startTime: '08:10', endTime: '10:00', credits: 2, type: '一般' },
+
+                // 週二 (製造潛在衝突)
+                { id: 'C101', name: '程式設計', campus: '民生', building: '五育樓', day: '週二', startTime: '08:10', endTime: '10:00', credits: 2, type: '一般' },
+                // 緊接著的課程，在不同校區 (屏商)
+                { id: 'C102', name: '管理學', campus: '屏商', building: '一館', day: '週二', startTime: '10:10', endTime: '12:00', credits: 2, type: '一般' },
+                // 另一門課，也在民生
+                { id: 'C103', name: '資料結構', campus: '民生', building: '五育樓', day: '週二', startTime: '10:10', endTime: '12:00', credits: 2, type: '一般' },
+                // 下午，跑去屏師
+                { id: 'C104', name: '西洋音樂史', campus: '屏師', building: '音樂館', day: '週二', startTime: '14:10', endTime: '17:00', credits: 3, type: '一般' },
+
+                // 週三 (通識課)
+                { id: 'C201', name: '通識-電影賞析', campus: '屏商', building: '圖資大樓', day: '週三', startTime: '10:10', endTime: '12:00', credits: 2, type: '通識' },
+                { id: 'C202', name: '通識-邏輯思維', campus: '民生', building: '人文館', day: '週三', startTime: '13:30', endTime: '15:20', credits: 2, type: '通識' },
+                { id: 'C203', name: '通識-環境科學', campus: '屏師', building: '操場', day: '週三', startTime: '15:40', endTime: '17:30', credits: 2, type: '通識' },
+            
+                // 週四
+                { id: 'C301', name: '微積分', campus: '屏商', building: '二館', day: '週四', startTime: '09:10', endTime: '12:00', credits: 3, type: '一般' },
+                { id: 'C302', name: '設計模式', campus: '民生', building: '五育樓', day: '週四', startTime: '13:30', endTime: '15:20', credits: 2, type: '一般' },
+
+                // 週五
+                { id: 'C401', name: '經濟學', campus: '屏商', building: '一館', day: '週五', startTime: '09:10', endTime: '12:00', credits: 3, type: '一般' },
+                { id: 'C402', name: '專題討論', campus: '屏商', building: '圖資大樓', day: '週五', startTime: '14:10', endTime: '17:00', credits: 1, type: '一般' },
+            ];
+
+            // --- 資料庫：交通時間 (來自 CSV) ---
+            
+            // 協助函式：轉換時間字串 "XmYs" 或 "Xm" 或 "Xs" 為秒
+            function parseTravelTime(timeStr) {
+                if (!timeStr || timeStr === 'X') return Infinity; // 無法通行
+                let seconds = 0;
+                const minMatch = timeStr.match(/(\d+)m/);
+                const secMatch = timeStr.match(/(\d+)s/);
+                if (minMatch) seconds += parseInt(minMatch[1]) * 60;
+                if (secMatch) seconds += parseInt(secMatch[1]);
+                // 處理只有 "2m" 或 "55s" 的情況
+                if (!minMatch && !secMatch && timeStr.includes('m')) {
+                    seconds += parseInt(timeStr) * 60;
+                } else if (!minMatch && !secMatch && timeStr.includes('s')) {
+                    seconds += parseInt(timeStr);
+                }
+                return seconds;
+            }
+
+            // 1. 校內步行時間 (秒) - 來自 屏商.csv, 屏師.csv, 民生.csv
+            // 為了簡化，我只手動輸入部分關鍵數據。一個完整的系統會需要完整的矩陣。
+            const walkingTimes = {
+                '屏商': {
+                    '入口': { '活動中心': 100, '行政大樓': 170, '球場': 250, '二館': 205, '一館': 340, '操場': 350, '學餐': 330, '圖資大樓': 180, '一宿': 280, '二宿': 180 },
+                    '行政大樓': { '入口': 170, '二館': 60, '一館': 120, '圖資大樓': 100 },
+                    '一館': { '入口': 340, '行政大樓': 120, '二館': 60, '操場': 35, '學餐': 45, '圖資大樓': 120 }, // <-- 修正 #1: 新增 '圖資大樓'
+                    '二館': { '入口': 205, '行政大樓': 60, '一館': 60, '圖資大樓': 40 },
+                    '球場': { '入口': 250 },
+                    '圖資大樓': { '入口': 180, '行政大樓': 100, '二館': 40, '一館': 120 }, // <-- 修正 #1: 新增 '一館'
+                },
+                '屏師': {
+                    // 假設「游泳池」是屏師校區的入口
+                    '游泳池': { '操場': 60, '音樂館': 110, '第三停車場': 160 },
+                    '操場': { '游泳池': 60, '音樂館': 60 },
+                    '音樂館': { '游泳池': 110, '操場': 60 },
+                },
+                '民生': {
+                    '正門': { '五育樓': 60, '人文館': 130, '北側機車': 240, '球場': 270, '機車出口': 150 },
+                    '五育樓': { '正門': 60, '人文館': 90 },
+                    '人文館': { '正門': 130, '五育樓': 90 },
+                }
+            };
+
+            // 輔助函式：取得校區的出入口
+            function getCampusGate(campus) {
+                if (campus === '屏商') return '入口';
+                if (campus === '民生') return '正門';
+                if (campus === '屏師') return '游泳池'; // 假設游泳池為屏師的出入點
+                return null;
+            }
+            
+            // 輔助函式：查詢校內步行時間
+            function getWalkingTime(campus, fromBuilding, toBuilding) {
+                if (fromBuilding === toBuilding) return 0;
+                try {
+                    const time = walkingTimes[campus][fromBuilding][toBuilding] || walkingTimes[campus][toBuilding][fromBuilding];
+                    return time || Infinity; // 如果找不到路徑，返回無限大
+                } catch (e) {
+                    return Infinity; // 建築或校區名稱錯誤
+                }
+            }
+
+
+            // 2. 跨校區移動時間 (分鐘) - 來自 跨校移動.csv
+            // 注意：原始資料的 "林森" 已對應到 "屏師"
+            const interCampusTimes = {
+                '車': { '屏商->民生': 4, '民生->屏師': 4, '屏師->屏商': 7 },
+                '機車': { '屏商->民生': 4, '民生->屏師': 2, '屏師->屏商': 5 },
+                '腳踏車': { '屏商->民生': 6, '民生->屏師': 3, '屏師->屏商': 9 },
+                '公車': { '屏商->民生': 15, '民生->屏師': 15, '屏師->屏商': 20 },
+                '走路': { '屏商->民生': 14, '民生->屏師': 15, '屏師->屏商': 30 }
+            };
+
+            // 輔助函式：查詢跨校區時間
+            function getInterCampusTime(fromCampus, toCampus, mode) {
+                const route = `${fromCampus}->${toCampus}`;
+                // 嘗試正向查詢
+                if (interCampusTimes[mode] && interCampusTimes[mode][route]) {
+                    return interCampusTimes[mode][route];
+                }
+                
+                // 嘗試反向查詢 (假設 A->B 和 B->A 時間相同，如果CSV中缺少的話)
+                const reverseRoute = `${toCampus}->${fromCampus}`;
+                if (interCampusTimes[mode] && interCampusTimes[mode][reverseRoute]) {
+                    return interCampusTimes[mode][reverseRoute];
+                }
+
+                return Infinity; // 找不到路線
+            }
+
+            // --- 應用程式狀態 ---
+            let selectedCourses = []; // 儲存已選課程的 ID
+            const courseListEl = document.getElementById('course-list');
+            const messageLogEl = document.getElementById('message-log');
+            const transportModeEl = document.getElementById('transport-mode');
+            const scheduleDaysEl = document.getElementById('schedule-days');
+
+            // --- 核心邏輯 ---
+
+            // 輔助函式：轉換 "HH:MM" 為自午夜起的分鐘數
+            function timeToMinutes(timeStr) {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            }
+
+            // 輔助函式：記錄訊息
+            function logMessage(message, type = 'info') {
+                if (type === 'clear') {
+                    messageLogEl.innerHTML = '';
+                    return;
+                }
+                
+                const p = document.createElement('p');
+                p.textContent = message;
+                if (type === 'error') {
+                    p.className = 'text-red-600 font-semibold';
+                } else if (type === 'success') {
+                    p.className = 'text-green-600';
+                } else {
+                    p.className = 'text-gray-700';
+                }
+                messageLogEl.prepend(p);
+            }
+
+            // 主要功能：檢查交通衝突
+            function checkTravelConflict(courseA, courseB) {
+                // courseA 是上一堂課, courseB 是下一堂課
+                
+                const gapMinutes = timeToMinutes(courseB.startTime) - timeToMinutes(courseA.endTime);
+                if (gapMinutes < 0) return { conflict: false }; // 這是時間重疊，不是交通衝突
+                
+                const transportMode = transportModeEl.value;
+                const travelInfo = getTravelTimeDetails(courseA, courseB, transportMode);
+
+                // 處理路徑找不到的錯誤
+                if (travelInfo.timeMinutes === Infinity) {
+                    return { conflict: true, message: travelInfo.detailMessage }; // e.g., "錯誤：找不到路徑..."
+                }
+
+                if (travelInfo.timeMinutes > gapMinutes) {
+                    // 交通時間 > 課間休息時間 = 衝突！
+                    const message = `交通時間衝突！\n` +
+                                  `課程 ${courseA.name} (${courseA.endTime} 結束) 到 ${courseB.name} (${courseB.startTime} 開始)，課間休息 ${gapMinutes} 分鐘。\n` +
+                                  `${travelInfo.detailMessage}\n` +
+                                  `結論：您可能無法準時抵達！`;
+                    return { conflict: true, message: message };
+                }
+
+                // 交通時間 <= 課間休息時間 = 安全
+                return { conflict: false };
+            }
+
+            // 修正 #2: 新增一個輔助函式，專門計算交通時間並回傳
+            function getTravelTimeDetails(courseA, courseB, transportMode) {
+                let totalTravelTimeMinutes = 0;
+                let detailMessage = "";
+
+                if (courseA.campus === courseB.campus) {
+                    // --- 1. 校內移動 ---
+                    const walkTimeSeconds = getWalkingTime(courseA.campus, courseA.building, courseB.building);
+                    if (walkTimeSeconds === Infinity) {
+                        return { timeMinutes: Infinity, detailMessage: `錯誤：在 ${courseA.campus} 找不到從 ${courseA.building} 到 ${courseB.building} 的校內路徑。` };
+                    }
+                    totalTravelTimeMinutes = walkTimeSeconds / 60;
+                    detailMessage = `在 ${courseA.campus} 從 ${courseA.building} 步行到 ${courseB.building} 估計需要 ${totalTravelTimeMinutes.toFixed(1)} 分鐘。`;
+
+                } else {
+                    // --- 2. 跨校區移動 ---
+                    const fromGate = getCampusGate(courseA.campus);
+                    const toGate = getCampusGate(courseB.campus);
+
+                    const walkToExitSec = getWalkingTime(courseA.campus, courseA.building, fromGate);
+                    const interCampusMin = getInterCampusTime(courseA.campus, courseB.campus, transportMode);
+                    const walkFromEntranceSec = getWalkingTime(courseB.campus, toGate, courseB.building);
+                    
+                    if (walkToExitSec === Infinity || interCampusMin === Infinity || walkFromEntranceSec === Infinity) {
+                        let errorPath = `錯誤：找不到 ${courseA.campus}(${courseA.building}) 到 ${courseB.campus}(${courseB.building}) 透過 ${transportMode} 的完整交通路徑。`;
+                        if (walkToExitSec === Infinity) errorPath += ` (無法從 ${courseA.building} 到 ${fromGate})`;
+                        if (interCampusMin === Infinity) errorPath += ` (無法從 ${courseA.campus} 到 ${courseB.campus})`;
+                        if (walkFromEntranceSec === Infinity) errorPath += ` (無法從 ${toGate} 到 ${courseB.building})`;
+                        return { timeMinutes: Infinity, detailMessage: errorPath };
+                    }
+
+                    const walkToExitMin = walkToExitSec / 60;
+                    const walkFromEntranceMin = walkFromEntranceSec / 60;
+                    totalTravelTimeMinutes = walkToExitMin + interCampusMin + walkFromEntranceMin;
+
+                    detailMessage = `交通分析 (搭乘${transportMode})：\n` +
+                        `1. 從 ${courseA.building} 步行到 ${courseA.campus} 出口 (${fromGate})：${walkToExitMin.toFixed(1)} 分鐘。\n` +
+                        `2. 從 ${courseA.campus} 跨校到 ${courseB.campus}：${interCampusMin.toFixed(1)} 分鐘。\n` +
+                        `3. 從 ${courseB.campus} 入口 (${toGate}) 步行到 ${courseB.building}：${walkFromEntranceMin.toFixed(1)} 分鐘。\n` +
+                        `--- 總計需要 ${totalTravelTimeMinutes.toFixed(1)} 分鐘。`;
+                }
+
+                return { timeMinutes: totalTravelTimeMinutes, detailMessage: detailMessage.split('\n')[0] }; // 只回傳簡短的訊息
+            }
+
+            // 主要功能：嘗試加入課程
+            function addCourse(courseId) {
+                const courseToAdd = mockCourses.find(c => c.id === courseId);
+                
+                // 檢查是否已選
+                if (selectedCourses.includes(courseId)) {
+                    logMessage(`錯誤：課程 ${courseToAdd.name} 已經在您的課表中。`, 'error');
+                    return;
+                }
+
+                logMessage('clear'); // 清除舊訊息
+                logMessage(`正在嘗試加入 ${courseToAdd.name}...`);
+
+                // 取得當天所有已選課程，並排序
+                const coursesOnSameDay = selectedCourses
+                    .map(id => mockCourses.find(c => c.id === id))
+                    .filter(c => c.day === courseToAdd.day)
+                    .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+                // 1. 檢查時間重疊
+                for (const existingCourse of coursesOnSameDay) {
+                    const existingStart = timeToMinutes(existingCourse.startTime);
+                    const existingEnd = timeToMinutes(existingCourse.endTime);
+                    const newStart = timeToMinutes(courseToAdd.startTime);
+                    const newEnd = timeToMinutes(courseToAdd.endTime);
+
+                    // 檢查重疊 (https://stackoverflow.com/questions/325933/determine-whether-two-date-ranges-overlap)
+                    if (newStart < existingEnd && newEnd > existingStart) {
+                        logMessage(`時間衝突！ ${courseToAdd.name} (${courseToAdd.startTime}-${courseToAdd.endTime}) 與 ${existingCourse.name} (${existingCourse.startTime}-${existingCourse.endTime}) 時間重疊。`, 'error');
+                        return;
+                    }
+                }
+
+                // 2. 檢查交通衝突
+                // 找出新課程之前和之後的課
+                let prevCourse = null;
+                let nextCourse = null;
+                const newStartTime = timeToMinutes(courseToAdd.startTime);
+
+                for (const existingCourse of coursesOnSameDay) {
+                    const existingEndTime = timeToMinutes(existingCourse.endTime);
+                    if (existingEndTime <= newStartTime) {
+                        if (!prevCourse || timeToMinutes(prevCourse.endTime) < existingEndTime) {
+                            prevCourse = existingCourse;
+                        }
+                    }
+                    
+                    const existingStartTime = timeToMinutes(existingCourse.startTime);
+                    if (existingStartTime >= newStartTime) {
+                         if (!nextCourse || timeToMinutes(nextCourse.startTime) > existingStartTime) {
+                            nextCourse = existingCourse;
+                        }
+                    }
+                }
+
+                // 檢查 (上一堂課 -> 新課程)
+                if (prevCourse) {
+                    const conflictCheck = checkTravelConflict(prevCourse, courseToAdd);
+                    if (conflictCheck.conflict) {
+                        logMessage(conflictCheck.message, 'error');
+                        return; // 發現衝突，停止加入
+                    }
+                }
+                
+                // 檢查 (新課程 -> 下一堂課)
+                if (nextCourse) {
+                    const conflictCheck = checkTravelConflict(courseToAdd, nextCourse);
+                    if (conflictCheck.conflict) {
+                        logMessage(conflictCheck.message, 'error');
+                        return; // 發現衝突，停止加入
+                    }
+                }
+
+                // 所有檢查通過
+                selectedCourses.push(courseId);
+                logMessage(`成功加入課程：${courseToAdd.name}。`, 'success');
+                renderSchedule(); // 重新整理課表
+                renderCourseList(); // 修正 #4: 重新整理課程列表 (更新勾選)
+            }
+
+            // 主要功能：移除課程
+            function removeCourse(courseId) {
+                selectedCourses = selectedCourses.filter(id => id !== courseId);
+                const course = mockCourses.find(c => c.id === courseId);
+                logMessage('clear');
+                logMessage(`已移除課程：${course.name}`, 'info');
+                renderSchedule();
+                renderCourseList(); // 修正 #4: 重新整理課程列表 (更新勾選)
+            }
+
+            // --- 渲染功能 ---
+            function renderCourseList() {
+                courseListEl.innerHTML = '';
+                mockCourses.forEach(course => {
+                    const isSelected = selectedCourses.includes(course.id); // 檢查是否已選
+
+                    const card = document.createElement('div');
+                    card.className = `course-card p-4 rounded-lg shadow-sm border transition-all duration-200 ${
+                        isSelected 
+                        ? 'bg-gray-200 border-gray-300 opacity-70' 
+                        : 'bg-white border-gray-200 cursor-pointer'
+                    }`;
+                    
+                    card.innerHTML = `
+                        <h4 class="font-bold text-blue-700 flex justify-between items-center">
+                            <span>${course.name} (${course.id})</span>
+                            ${isSelected ? '<span class="text-green-600 font-bold text-xl" title="已選">✓</span>' : ''}
+                        </h4>
+                        <p class="text-sm text-gray-600">${course.campus} - ${course.building}</p>
+                        <p class="text-sm text-gray-600">${course.day} | ${course.startTime} - ${course.endTime}</p>
+                        <p class="text-sm text-gray-500">${course.type} | ${course.credits} 學分</p>
+                    `;
+                    
+                    if (!isSelected) {
+                        card.onclick = () => addCourse(course.id);
+                    }
+                    courseListEl.appendChild(card);
+                });
+            }
+
+            function renderSchedule() {
+                // 清空所有日程
+                scheduleDaysEl.querySelectorAll('.day-content').forEach(el => el.innerHTML = '');
+                
+                // 修正 #2: 建立一個map來追蹤每天的上一堂課
+                const prevCourseInDay = {
+                    '週一': null, '週二': null, '週三': null, '週四': null, '週五': null
+                };
+
+                // 取得所有已選課程並排序
+                const scheduledCourses = selectedCourses
+                    .map(id => mockCourses.find(c => c.id === id))
+                    .sort((a, b) => {
+                        if (a.day !== b.day) return a.day.localeCompare(b.day);
+                        return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+                    });
+
+                // 填入日程
+                scheduledCourses.forEach(course => {
+                    const dayContainer = scheduleDaysEl.querySelector(`[data-day="${course.day}"] .day-content`);
+                    if (dayContainer) {
+                        
+                        // 修正 #2: 檢查並顯示交通時間
+                        const prevCourse = prevCourseInDay[course.day];
+                        if (prevCourse) {
+                            const transportMode = transportModeEl.value;
+                            const travelInfo = getTravelTimeDetails(prevCourse, course, transportMode);
+                            const gapMinutes = timeToMinutes(course.startTime) - timeToMinutes(prevCourse.endTime);
+
+                            let timeColorClass = 'text-gray-500'; // 預設
+                            let icon = '...';
+                            if (travelInfo.timeMinutes === Infinity) {
+                                timeColorClass = 'text-red-600 font-semibold';
+                                icon = '❌';
+                            } else if (travelInfo.timeMinutes > gapMinutes) {
+                                timeColorClass = 'text-red-600 font-semibold'; // 時間不足
+                                icon = '⚠️';
+                            } else {
+                                timeColorClass = 'text-green-600'; // 時間足夠
+                                icon = '✅';
+                            }
+
+                            const travelEl = document.createElement('div');
+                            travelEl.className = `py-2 text-xs text-center border-l-2 border-dashed border-gray-300 ml-4 ${timeColorClass}`;
+                            travelEl.innerHTML = `
+                                <span>${icon} ( ${prevCourse.endTime} ~ ${course.startTime} )</span><br>
+                                課間休息: ${gapMinutes} 分鐘<br>
+                                預估交通: ${travelInfo.timeMinutes === Infinity ? '無法計算' : travelInfo.timeMinutes.toFixed(1) + ' 分鐘'}
+                            `;
+                            dayContainer.appendChild(travelEl);
+                        }
+
+                        const courseEl = document.createElement('div');
+                        courseEl.className = 'bg-blue-100 p-2 rounded-md border border-blue-300 relative';
+                        courseEl.innerHTML = `
+                            <p class="font-semibold text-blue-800">${course.name}</p>
+                            <p class="text-xs text-gray-700">${course.startTime} - ${course.endTime}</p>
+                            <p class="text-xs text-gray-600">${course.campus} - ${course.building}</p>
+                            <button class="absolute top-1 right-1 text-red-500 hover:text-red-700 font-bold text-lg" title="移除課程">&times;</button>
+                        `;
+                        courseEl.querySelector('button').onclick = (e) => {
+                            e.stopPropagation(); // 防止觸發 addCourse
+                            removeCourse(course.id);
+                        };
+                        dayContainer.appendChild(courseEl);
+
+                        // 修正 #2: 更新本日的上一堂課
+                        prevCourseInDay[course.day] = course;
+                    }
+                });
+            }
+
+            // --- 程式初始化 ---
+            renderCourseList();
+            renderSchedule(); // 確保空的課表被正確繪製
+
+            // 修正 #3: 監聽交通方式變更
+            transportModeEl.addEventListener('change', () => {
+                logMessage('clear');
+                logMessage('交通方式已更新，正在重新計算課表...', 'info');
+                renderSchedule(); // 重新繪製課表以更新交通時間
+            });
+        });
+    </script>
+</body>
+</html>
